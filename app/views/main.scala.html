@@ -1,0 +1,108 @@
+@import model._
+@import views.html.helper._
+
+@(
+        urlForm: Form[UrlData],
+        error: Option[String],
+        report: Option[Report])(
+        implicit request: RequestHeader,
+        messages: Messages
+)
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <link rel="icon" href="@routes.Assets.versioned("images/favicon.ico")">
+
+        <title>HTML Analyser</title>
+
+        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("lib/bootstrap/css/bootstrap.min.css")">
+        <link href="@routes.Assets.versioned("stylesheets/main.css")" rel="stylesheet">
+        <script src="@routes.Assets.versioned("lib/bootstrap/js/bootstrap.min.js")" crossorigin="anonymous"></script>
+    </head>
+
+    <body>
+        <div class="container">
+            @form(routes.MainController.analyzeHtml(), 'class -> "form-inline") {
+                @CSRF.formField
+                @inputText(urlForm("url"), '_label -> "URL", 'class -> "form-control mb-2 mr-sm-2 mb-sm-0")
+                <input class="btn btn-primary" type="submit" value="Analyze"/>
+            }
+
+            @for(e <- error) {
+                <div class="alert alert-danger">
+                    <strong>Error</strong>
+                    @e
+                </div>
+            }
+
+            @for(r <- report) {
+                <div class="content">
+                    <p>
+                        <b>URL:</b>
+                        @r.url
+                    </p>
+
+                    <p>
+                        <b>HTML version:</b>
+                        @r.htmlVersion.getOrElse("N/A")
+                    </p>
+
+                    <p>
+                        <b>Title:</b>
+                        @r.title.getOrElse("N/A")
+                    </p>
+
+                    <p>
+                        <b>Headings:</b>
+                        @if(r.headingsCount.isEmpty) {
+                            -
+                        } else {
+                            @for((k, v) <- r.headingsCount) {
+                                <br/>
+                                @k: @v
+                            }
+                        }
+                    </p>
+
+                    <p>
+                        <b>Links:</b>
+                        Internal: @r.linksCount.internal;
+                        External: @r.linksCount.external
+                    </p>
+
+                    <p>
+                        <b>Login form:</b>
+                        @if(r.login) {
+                            Yes
+                        } else {
+                            No
+                        }
+                    </p>
+
+                    <p>
+                        <b>Resources check:</b>
+                        @if(r.reachableLinksCount.isEmpty) {
+                            -
+                        }
+
+                        @for(x <- r.reachableLinksCount) {
+                            Reached: @x;
+                        }
+
+                        @for(x <- r.unreachableLinksCount) {
+                            Not reached: @x
+                        }
+
+                        @for(link <- r.unreachableLinks) {
+                            <br/>
+                            @link._1: @link._2
+                        }
+                    </p>
+
+                </div>
+            }
+        </div>
+    </body>
+</html>
